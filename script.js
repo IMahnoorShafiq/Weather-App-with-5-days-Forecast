@@ -8,12 +8,21 @@ function getWeatherData(city) {
     const apiUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${apiKey}`;
 
     fetch(apiUrl)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('City not found');
+            }
+            return response.json();
+        })
         .then(data => {
             console.log(data);
             displayWeather(data);
+            document.getElementById('errorMessage').style.display = 'none'; 
         })
-        .catch(error => console.error('Error fetching weather data:', error));
+        .catch(error => {
+            console.error('Error fetching weather data:', error);
+            displayError(error.message);
+        });
 }
 
 function displayWeather(data) {
@@ -29,14 +38,13 @@ function displayWeather(data) {
 
     const forecastContainer = document.getElementById('forecastContainer');
     forecastContainer.innerHTML = ''; // Clear previous forecast
-// Forecast loop for next five days
+
     for (let i = 0; i < 5; i++) {
-        // 3-hour intervals, so 8 intervals per day
-        const forecastDay = data.list[i * 8]; 
+        const forecastDay = data.list[i * 8];
         const date = new Date(forecastDay.dt_txt).toLocaleDateString(undefined, { weekday: 'short' });
         const temp = forecastDay.main.temp;
         const icon = `https://openweathermap.org/img/wn/${forecastDay.weather[0].icon}@2x.png`;
-// Creating Elements for forecasts further 
+
         const forecastElement = document.createElement('div');
         forecastElement.classList.add('forecast-day');
         forecastElement.innerHTML = `
@@ -44,7 +52,13 @@ function displayWeather(data) {
             <img src="${icon}" alt="Weather Icon">
             <p>${temp}°C</p>
         `;
-// This appends the forecastElement to the forecastContainer, making it visible on the webpage.
+
         forecastContainer.appendChild(forecastElement);
     }
+}
+
+function displayError(message) {
+    const errorMessage = document.getElementById('errorMessage');
+    errorMessage.textContent = message;
+    errorMessage.style.display = 'block';
 }
